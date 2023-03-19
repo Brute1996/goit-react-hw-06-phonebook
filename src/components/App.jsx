@@ -1,16 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { nanoid } from 'nanoid'
 import { ContactForm } from "./ContactForm/ContactForm";
 import { ContactList } from "./ContactList/ContactList";
 import { Filter } from "./Filter/Filter";
+import { useDispatch, useSelector } from "react-redux";
+import { addContact as addContactAction, deleteContact as deleteContactAction, getContacts } from "./store/contacts/contactSlice";
 
 
 export const App = () => {
-  
   const [name, setName] = useState('');
   const [number, setNumber] = useState('');
-  const [filter, setFilter] = useState('');
-  const [contacts, setContacts] = useState(JSON.parse(localStorage.getItem('savedContacts')) ?? []);
+
+  const contacts = useSelector(getContacts);
+  const filterValue = useSelector(state => state.filter);
+  const dispatch = useDispatch();
+
 
   const handleChange = (e) => {
     const { value, name } = e.target;
@@ -22,10 +26,6 @@ export const App = () => {
       
       case 'number':
         setNumber(value)
-        break;
-      
-      case 'filter':
-        setFilter(value)
         break;
       
       default:
@@ -41,32 +41,33 @@ export const App = () => {
     return alert(`${name} already in contacts.`)
   }
 
-  const contact = [{
+  const newContact = {
     name: name,
     number: number,
     id: nanoid(),
-  }];
+  };
   
-    setContacts(state => [...state, ...contact])
+    dispatch(addContactAction(newContact))
   
     e.target.reset()
   
   };
 
   const filteredContacts = () => {
-    const normlizeFilter = filter.toLowerCase();
+    const normlizeFilter = filterValue.toLowerCase();
     
     return contacts.filter(contact => contact.name.toLowerCase().includes(normlizeFilter));
   };
 
   const deleteContact = (contactId) => {
-    setContacts(state => state.filter(contact => contact.id !== contactId))
+
+    dispatch(deleteContactAction(contactId));
   };
 
   // add contacts to localstor
-  useEffect(() => {
-    localStorage.setItem('savedContacts', JSON.stringify(contacts))
-  }, [contacts]);
+  // useEffect(() => {
+  //   localStorage.setItem('savedContacts', JSON.stringify(contacts))
+  // }, [contacts]);
 
 
   return (
@@ -84,9 +85,7 @@ export const App = () => {
       <ContactForm addContact={addContact}
         handleChange={handleChange}/>
       <h2 style={{ margin: 30 }}>Contacts</h2>
-      <Filter
-        handleChange={handleChange}
-        filterValue={filter} />
+      <Filter/>
       <ContactList
         contacts={filteredContacts()}
         deleteContact={deleteContact} />
